@@ -33,5 +33,11 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 delta = playerInput.Move * transform.forward * moveSpeed * Time.deltaTime;
         playerRigidbody.MovePosition(playerRigidbody.position + delta);
+
+        if (playerRigidbody.position != transform.position)
+        {
+            Debug.Log($"[Physics] {playerRigidbody.position}");
+            Debug.Log($"[Render]  {transform.position}");
+        }
     }
 }
