@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -37,6 +38,7 @@ public class Gun : MonoBehaviour
     private float lastFireTime;
 
     private Coroutine coShot;
+    private Coroutine coReload;
 
     private void Awake()
     {
@@ -144,11 +146,30 @@ public class Gun : MonoBehaviour
 
     public bool Reload()
     {
+        if (coReload != null)
+        {
+            return false;
+        }
+
+        if (State != Stats.Reloading && magAmmo != gunData.magCapacity && ammoRemain != 0)
+        {
+            coReload = StartCoroutine(CoReload());
+            return true;
+        }
+
         return false;
     }
 
     private IEnumerator CoReload()
     {
-        yield return null;
+        int temp = Math.Min(gunData.magCapacity - magAmmo, ammoRemain);
+        State = Stats.Reloading;
+
+        yield return new WaitForSeconds(gunData.reloadTime);
+
+        coReload = null;
+        magAmmo += temp;
+        ammoRemain -= temp;
+        State = Stats.Ready;
     }
 }

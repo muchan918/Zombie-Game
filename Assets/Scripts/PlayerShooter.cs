@@ -1,5 +1,6 @@
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PlayerShooter : MonoBehaviour
 {
@@ -24,6 +25,15 @@ public class PlayerShooter : MonoBehaviour
         if (playerInput.Fire)
         {
             gun.Fire();
+        }
+
+        // 재장전 추가
+        if (playerInput.Reload)
+        {
+            if (gun.Reload())
+            {
+                playerAnimator.SetTrigger("Reload");
+            }
         }
     }
 
