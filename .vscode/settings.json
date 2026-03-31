@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Zombie-Game.slnx"
+    "dotnet.defaultSolution": "Zombie_Survival.slnx"
 }
