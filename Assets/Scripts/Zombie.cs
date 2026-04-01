@@ -1,9 +1,8 @@
-using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Zombie : MonoBehaviour
+public class Zombie : LivingEntity
 {
     public enum Status
     {
@@ -26,7 +25,18 @@ public class Zombie : MonoBehaviour
     public float attackInterval = 1f;
     private float lastAttackTime = 0f;
 
+    private float damage;
+
     private Status currentStatus;
+
+    public AudioClip deathClip;
+    public AudioClip hitClip;
+
+    private AudioSource zombieAudioSource;
+    public ParticleSystem bloodEffect;
+    public Collider zombieCollider;
+
+    public Renderer zombieRenderer;
 
     public Status CurrentStatus
     {
@@ -53,26 +63,58 @@ public class Zombie : MonoBehaviour
                     agent.isStopped = true;
                     break;
                 case Status.Die:
+                    zombieAnimator.SetTrigger("Die");
+                    agent.isStopped = true;
+                    zombieCollider.enabled = false;
+                    hitBox.Colliders.Clear();
+                    hitBox.gameObject.SetActive(false);
+                    zombieAudioSource.PlayOneShot(deathClip);
                     break;
             }
         }
+    }
+
+    public void Setup(ZombieData data)
+    {
+        gameObject.SetActive(false);
+
+        startingHealth = data.maxHP;
+        damage = data.damage;
+        agent.speed = data.speed;
+        zombieRenderer.material.color = data.skinColor;
+
+        gameObject.SetActive(true);
     }
 
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         zombieAnimator = GetComponent<Animator>();
+        zombieAudioSource = GetComponent<AudioSource>();
+        zombieCollider = GetComponent<Collider>();
     }
 
-    private void Start()
+    protected override void OnEnable()
     {
+        base.OnEnable();
+
+        // NavMesh를 사용할거면 이걸 추가해야한다
+        agent.enabled = true;
+        agent.isStopped = false;
+        agent.ResetPath();
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 10f, NavMesh.AllAreas))
+        {
+            agent.Warp(hit.position);
+        }
+
+        zombieCollider.enabled = true;
+        hitBox.gameObject.SetActive(true);
+
         CurrentStatus = Status.Idle;
     }
 
     private void Update()
     {
-        //agent.SetDestination(target.position);
-
         // 상태가 업데이트 될때마다 실행해야될 함수 -> 메서드로 만들어서 실행
         switch (currentStatus)
         {
@@ -165,12 +207,15 @@ public class Zombie : MonoBehaviour
 
         if (Time.time > lastAttackTime + attackInterval)
         {
-            Debug.Log("Attack Attack");
             lastAttackTime = Time.time;
-            var damagable = target.GetComponent<IDamagable>();
-            if (damagable != null)
+            var livingEntity = target.GetComponent<LivingEntity>();
+            if (livingEntity != null)
             {
-                damagable.OnDamage(10f, transform.position, -transform.forward);
+                if (!livingEntity.IsDead)
+                {
+                    Debug.Log("Attack Attack");
+                    livingEntity.OnDamage(10f, transform.position, -transform.forward);
+                }
             }
         }
 
@@ -180,7 +225,23 @@ public class Zombie : MonoBehaviour
 
     private void UpdateDie()
     {
-        throw new NotImplementedException();
+
+    }
+
+    public override void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal)
+    {
+        base.OnDamage(damage, hitPoint, hitNormal);
+
+        zombieAudioSource.PlayOneShot(hitClip);
+        bloodEffect.transform.position = hitPoint;
+        bloodEffect.transform.forward = hitNormal;
+        bloodEffect.Play();
+    }
+
+    public override void Die()
+    {
+        CurrentStatus = Status.Die;
+        base.Die();
     }
 
     private Transform FindTarget(float radius)

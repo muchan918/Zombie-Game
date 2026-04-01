@@ -42,4 +42,20 @@ public class PlayerMovement : MonoBehaviour
         //     Debug.Log($"[Render]  {transform.position}");
         // }
     }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Item"))
+        {
+            // 여기 밑에만 있어도 됨
+            Debug.Log("아이템 먹음");
+            var item = other.GetComponent<IItem>();
+            if (item != null)
+            {
+                Debug.Log("아이템 있음");
+                item.Use(gameObject);
+                Destroy(other.gameObject);
+            }
+        }
+    }
 }

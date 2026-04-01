@@ -12,6 +12,7 @@ public class Gun : MonoBehaviour
         Empty,
         Reloading
     }
+    public UIManager uiManager;
 
     public Stats State { get; private set; }
 
@@ -20,6 +21,8 @@ public class Gun : MonoBehaviour
     // 얘네들은 자식 오브젝트에 있는거라 public
     public ParticleSystem muzzleEffect;
     public ParticleSystem shellEffect;
+
+    public LayerMask targetLayer;
 
     // 얘네들은 컴포넌트로 가져올거라 private
     private LineRenderer bulletLineEffect;
@@ -56,6 +59,7 @@ public class Gun : MonoBehaviour
 
         State = Stats.Ready;
         lastFireTime = 0f;
+        uiManager.SetAmmoText(magAmmo, ammoRemain);
     }
 
     // 바깥에서 호출할 함수들
@@ -85,12 +89,12 @@ public class Gun : MonoBehaviour
 
         // 충돌했을때 충돌체의 정보를 갖고 있는 구조체
         // 충돌하면 fireDistance까지만 검사
-        if (Physics.Raycast(ray, out RaycastHit hit, fireDistance))
+        if (Physics.Raycast(ray, out RaycastHit hit, fireDistance, targetLayer))
         {
             // ray가 충돌한 world 좌표
             hitPosition = hit.point;
 
-            var target = hit.collider.GetComponent<IDamagable>();
+            var target = hit.collider.GetComponent<LivingEntity>();
             if (target != null)
             {
                 // ray로 충돌하는 충돌체의 법선은 충돌체의 모양에 따라 달라진다.
@@ -114,6 +118,7 @@ public class Gun : MonoBehaviour
 
         // 총알 빼주기
         magAmmo--;
+        uiManager.SetAmmoText(magAmmo, ammoRemain);
         if (magAmmo <= 0)
         {
             State = Stats.Empty;
@@ -170,6 +175,13 @@ public class Gun : MonoBehaviour
         coReload = null;
         magAmmo += temp;
         ammoRemain -= temp;
+        uiManager.SetAmmoText(magAmmo, ammoRemain);
         State = Stats.Ready;
+    }
+
+    public void AddRemainAmmo(int add)
+    {
+        ammoRemain += add;
+        uiManager.SetAmmoText(magAmmo, ammoRemain);
     }
 }
