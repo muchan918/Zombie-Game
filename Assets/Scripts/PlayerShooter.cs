@@ -1,6 +1,4 @@
-using UnityEditor.ShortcutManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class PlayerShooter : MonoBehaviour
 {
